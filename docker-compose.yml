@@ -1,0 +1,26 @@
+services:
+  evacuation:
+    build: .
+    image: venue-evacuation:latest
+    container_name: venue-evacuation
+    ports:
+      # 宿主机端口:容器内端口
+      - "${EVAC_HOST_PORT:-8080}:8000"
+    environment:
+      # SQLite 数据库文件路径 (容器内); 挂载到命名卷实现持久化
+      EVAC_DB_PATH: /data/evacuation.db
+      # uvicorn 容器内监听端口
+      EVAC_PORT: "8000"
+      # 首次启动且库为空时是否自动载入 data/seed.py 中的演示数据: 1=是 0=否
+      EVAC_SEED: "1"
+    volumes:
+      - evac-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  evac-data:
